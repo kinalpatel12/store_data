@@ -440,3 +440,219 @@ List<Video> videoList = [
   ),
 ];
 
+///bottom bar
+
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MyHomePage(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  int _selectedIndex = 0;
+  bool _showIcons = false;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      _showIcons = false; // Hide icons when a navigation item is tapped
+    });
+  }
+
+  void _toggleIcons() {
+    setState(() {
+      _showIcons = !_showIcons;
+      if (_showIcons) {
+        _selectedIndex = 4; // Change page when floating action button is tapped
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Bottom Navigation Bar Example'),
+      ),
+      body: Stack(
+        children: [
+          Center(
+            child: Text(
+              'Selected Index: $_selectedIndex',
+              style: TextStyle(fontSize: 24),
+            ),
+          ),
+          if (_showIcons)
+            Positioned(
+              bottom: 80.0,
+              left: MediaQuery.of(context).size.width / 2 - 90,
+              right: MediaQuery.of(context).size.width / 2 - 90,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.camera_alt, color: Colors.blue, size: 30),
+                    onPressed: () {
+                      print('Camera icon pressed');
+                      _toggleIcons();
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.photo, color: Colors.blue, size: 30),
+                    onPressed: () {
+                      print('Photo icon pressed');
+                      _toggleIcons();
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.videocam, color: Colors.blue, size: 30),
+                    onPressed: () {
+                      print('Video icon pressed');
+                      _toggleIcons();
+                    },
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _toggleIcons,
+        child: Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: CircularNotchedRectangle(),
+        notchMargin: 8.0,
+        child: Container(
+          height: 60.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  MaterialButton(
+                    minWidth: 40,
+                    onPressed: () {
+                      _onItemTapped(0);
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(
+                          Icons.home,
+                          color:
+                              _selectedIndex == 0 ? Colors.blue : Colors.grey,
+                        ),
+                        Text(
+                          'Home',
+                          style: TextStyle(
+                            color:
+                                _selectedIndex == 0 ? Colors.blue : Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  MaterialButton(
+                    minWidth: 40,
+                    onPressed: () {
+                      _onItemTapped(1);
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(
+                          Icons.search,
+                          color:
+                              _selectedIndex == 1 ? Colors.blue : Colors.grey,
+                        ),
+                        Text(
+                          'Search',
+                          style: TextStyle(
+                            color:
+                                _selectedIndex == 1 ? Colors.blue : Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  MaterialButton(
+                    minWidth: 40,
+                    onPressed: () {
+                      _onItemTapped(2);
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(
+                          Icons.notifications,
+                          color:
+                              _selectedIndex == 2 ? Colors.blue : Colors.grey,
+                        ),
+                        Text(
+                          'Notifications',
+                          style: TextStyle(
+                            color:
+                                _selectedIndex == 2 ? Colors.blue : Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  MaterialButton(
+                    minWidth: 40,
+                    onPressed: () {
+                      _onItemTapped(3);
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(
+                          Icons.person,
+                          color:
+                              _selectedIndex == 3 ? Colors.blue : Colors.grey,
+                        ),
+                        Text(
+                          'Profile',
+                          style: TextStyle(
+                            color:
+                                _selectedIndex == 3 ? Colors.blue : Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
