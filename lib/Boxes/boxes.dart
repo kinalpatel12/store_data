@@ -656,3 +656,315 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+
+///custom
+
+import 'package:flutter/material.dart';
+import 'package:miniplayer/miniplayer.dart';
+import 'package:video_player/video_player.dart';
+
+void main() {
+  runApp(VideoDemoApp());
+}
+
+class VideoDemoApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Video Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: VideoListScreen(),
+    );
+  }
+}
+
+class VideoListScreen extends StatefulWidget {
+  @override
+  _VideoListScreenState createState() => _VideoListScreenState();
+}
+
+class _VideoListScreenState extends State<VideoListScreen> {
+  VideoPlayerController? _controller;
+  Video? _currentVideo;
+  final MiniplayerController _miniplayerController = MiniplayerController();
+  final double _playerMinHeight = 70.0;
+  bool _isVideoPlaying = false;
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  void _playVideo(Video video) {
+    setState(() {
+      _currentVideo = video;
+      _controller?.dispose();
+      _controller = VideoPlayerController.network(video.url)
+        ..initialize().then((_) {
+          setState(() {
+            _isVideoPlaying = true;
+            _controller!.play();
+            _miniplayerController.animateToHeight(state: PanelState.MAX);
+          });
+        });
+    });
+  }
+
+  void _togglePlayPause() {
+    setState(() {
+      if (_controller!.value.isPlaying) {
+        _controller!.pause();
+      } else {
+        _controller!.play();
+      }
+    });
+  }
+
+  void _closeMiniPlayer() {
+    setState(() {
+      _controller?.pause();
+      _isVideoPlaying = false;
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return [if (duration.inHours > 0) hours, minutes, seconds].join(':');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Video Demo'),
+      ),
+      body: Stack(
+        children: [
+          ListView.builder(
+            itemCount: videoList.length,
+            itemBuilder: (context, index) {
+              final video = videoList[index];
+              return ListTile(
+                title: Text(video.title),
+                onTap: () => _playVideo(video),
+              );
+            },
+          ),
+          if (_isVideoPlaying)
+            Miniplayer(
+              controller: _miniplayerController,
+              minHeight: _playerMinHeight,
+              maxHeight: MediaQuery.of(context).size.height,
+              builder: (height, percentage) {
+                if (height <= _playerMinHeight + 50) {
+                  return Container(
+                    color: Colors.black,
+                    child: Row(
+                      children: [
+                        _controller!.value.isInitialized
+                            ? AspectRatio(
+                                aspectRatio: _controller!.value.aspectRatio,
+                                child: VideoPlayer(_controller!),
+                              )
+                            : Center(child: CircularProgressIndicator()),
+                        Expanded(
+                          child: ListTile(
+                            title: Text(
+                              _currentVideo!.title,
+                              style: TextStyle(color: Colors.white),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(Icons.close, color: Colors.white),
+                              onPressed: _closeMiniPlayer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  return Scaffold(
+                    body: Center(
+                      child: _controller!.value.isInitialized
+                          ? AspectRatio(
+                              aspectRatio: _controller!.value.aspectRatio,
+                              child: Stack(
+                                alignment: Alignment.bottomCenter,
+                                children: [
+                                  VideoPlayer(_controller!),
+                                  _ControlsOverlay(
+                                    controller: _controller!,
+                                    onFullscreenToggle: () {
+                                      _miniplayerController.animateToHeight(
+                                        state: PanelState.MAX,
+                                      );
+                                    },
+                                    onDismiss: _closeMiniPlayer,
+                                  ),
+                                  VideoProgressIndicator(
+                                    _controller!,
+                                    allowScrubbing: true,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : CircularProgressIndicator(),
+                    ),
+                  );
+                }
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ControlsOverlay extends StatefulWidget {
+  const _ControlsOverlay({
+    required this.controller,
+    required this.onFullscreenToggle,
+    required this.onDismiss,
+    Key? key,
+  }) : super(key: key);
+
+  final VideoPlayerController controller;
+  final VoidCallback onFullscreenToggle;
+  final VoidCallback onDismiss;
+
+  @override
+  __ControlsOverlayState createState() => __ControlsOverlayState();
+}
+
+class __ControlsOverlayState extends State<_ControlsOverlay> {
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 50),
+          reverseDuration: const Duration(milliseconds: 200),
+          child: widget.controller.value.isPlaying
+              ? const SizedBox.shrink()
+              : Container(
+                  color: Colors.black26,
+                  child: const Center(
+                    child: Icon(
+                      Icons.play_arrow,
+                      color: Colors.white,
+                      size: 30.0,
+                    ),
+                  ),
+                ),
+        ),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              widget.controller.value.isPlaying
+                  ? widget.controller.pause()
+                  : widget.controller.play();
+            });
+          },
+        ),
+        Align(
+          alignment: Alignment.topRight,
+          child: IconButton(
+            icon: Icon(Icons.fullscreen, color: Colors.white),
+            onPressed: widget.onFullscreenToggle,
+          ),
+        ),
+        Align(
+          alignment: Alignment.topLeft,
+          child: IconButton(
+            icon: Icon(Icons.close, color: Colors.white),
+            onPressed: widget.onDismiss,
+          ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: _buildControls(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildControls(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: widget.controller,
+      builder: (context, VideoPlayerValue value, child) {
+        return Container(
+          color: Colors.black45,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              IconButton(
+                icon: Icon(
+                  widget.controller.value.isPlaying
+                      ? Icons.pause
+                      : Icons.play_arrow,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    widget.controller.value.isPlaying
+                        ? widget.controller.pause()
+                        : widget.controller.play();
+                  });
+                },
+              ),
+              Text(
+                '${_formatDuration(value.position)} / ${_formatDuration(value.duration)}',
+                style: TextStyle(color: Colors.white),
+              ),
+              IconButton(
+                icon: Icon(Icons.fullscreen, color: Colors.white),
+                onPressed: widget.onFullscreenToggle,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return [if (duration.inHours > 0) hours, minutes, seconds].join(':');
+  }
+}
+
+class Video {
+  final String title;
+  final String url;
+
+  Video({required this.title, required this.url});
+}
+
+List<Video> videoList = [
+  Video(
+    title: "The Valley",
+    url:
+        "https://mazwai.com/videvo_files/video/free/2016-04/small_watermarked/the_valley-graham_uheslki_preview.webm",
+  ),
+  Video(
+    title: "Taksin Bridge",
+    url:
+        "https://mazwai.com/videvo_files/video/free/2019-01/small_watermarked/190111_04_TaksinBridge_Drone_06_preview.webm",
+  ),
+  Video(
+    title: "Wat Arun Temple",
+    url:
+        "https://mazwai.com/videvo_files/video/free/2019-02/small_watermarked/190111_03_WatArunTemple_Drone_02_preview.webm",
+  ),
+];
